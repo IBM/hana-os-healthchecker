@@ -1,0 +1,15 @@
+{
+  "json_version": "1.2",
+  "vendor": "IBM",
+  "product": "2145",
+  "failback": "immediate",
+  "no_path_retry": "fail",
+  "path_checker": "tur",
+  "path_grouping_policy": "group_by_prio",
+  "path_selector": "service-time 0",
+  "prio": "alua",
+  "fast_io_fail_tmo": "5",
+  "rr_min_io_rq": "32",
+  "rr_weight": "priorities",
+  "retain_attached_hw_handler": "yes"
+}

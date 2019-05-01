@@ -1,0 +1,15 @@
+{
+  "json_version": "0.5",
+  "ibm-power-nonmanaged-sles12": 0,
+  "ibm-power-baremetal-sles12": 0,
+  "ibm-power-managed-sles12": 0,
+  "ibm-power-kvmguest-sles12": 1,
+  "ibm-power-baremetal-rhel7": 0,
+  "ibm-power-managed-rhel7": 0,
+  "ibm-power-nonmanaged-rhel7": 0,
+  "ibm-power-kvmguest-rhel7": 1,
+  "ibm-power-baremetal-sles15": 0,
+  "ibm-power-managed-sles15": 0,
+  "ibm-power-nonmanaged-sles15": 0,
+  "ibm-power-kvmguest-sles15": 1
+}

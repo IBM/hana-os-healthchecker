@@ -1,0 +1,8 @@
+{
+  "json_version": "0.2",
+  "pseries-energy": 1,
+  "ppc64-diag": 0,
+  "powerpc-utils": 0,
+  "ibmPMLinux": 0,
+  "ipmitool": 0
+}
