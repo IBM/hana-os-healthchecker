@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import json
 import os
 import sys
@@ -41,7 +42,7 @@ def check_parameters():
     try: #in case no argument is passed
         argument1=sys.argv[1]
     except:
-        print
+        print()
         sys.exit(error_message)
 
     #Optional --with-multipath argument
@@ -57,36 +58,36 @@ def check_parameters():
     if argument1.upper() in ('XFS', 'NFS', 'ESS'): #To check is a wanted argument
         return argument1.upper(),with_multipath
     else:
-        print
+        print()
         sys.exit(error_message)
 
 def show_header(hoh_version,json_version):
     #Say hello and give chance to disagree to the no warranty of any kind
     while True:
-        print
+        print()
         print(GREEN + "Welcome to HANA OS Healthchecker (HOH) version " + hoh_version + NOCOLOR)
-        print
+        print()
         print("Please use " + GITHUB_URL + " to get latest versions and report issues about HOH.")
-        print
+        print()
         print("The purpose of HOH is to supplement the official tools like HWCCT not to substitute them, always refer to official documentation from IBM, SuSE/RedHat, and SAP")
-        print
+        print()
         print("You should always check your system with latest version of HWCCT as explained on SAP note:1943937 - Hardware Configuration Check Tool - Central Note")
-        print
+        print()
         print("JSON files versions:")
         print("\tSupported OS:\t\t\t\t" + json_version['supported_OS'])
         print("\tsysctl: \t\t\t\t" + json_version['sysctl'])
         print("\tPackages: \t\t\t\t" + json_version['packages'])
         print("\tIBM Power packages:\t\t\t" + json_version['ibm_power_packages'])
-        print("\tIBM Spectrum Virtualize multipath:\t") + json_version['svc_multipath']
-        print
+        print(("\tIBM Spectrum Virtualize multipath:\t") + json_version['svc_multipath'])
+        print()
         print(RED + "This software comes with absolutely no warranty of any kind. Use it at your own risk" + NOCOLOR)
-        print
+        print()
         run_this = raw_input("Do you want to continue? (y/n): ")
         if run_this.lower() == 'y':
-            print
+            print()
             break
         if run_this.lower() == 'n':
-            print
+            print()
             sys.exit("Have a nice day! Bye.\n")
 
 def check_processor():
@@ -95,14 +96,14 @@ def check_processor():
     current_processor = platform.processor()
     #print(current_processor)
     if current_processor != expected_processor:
-        print
+        print()
         sys.exit(error_message)
 
 def check_os_suse(os_dictionary):
     #Checks the OS string vs the JSON file. If supported goes, if explecitely not supported quits. If no match also quits
-    print
+    print()
     print("Checking OS version")
-    print
+    print()
 
     with open("/etc/os-release") as os_release_file:
         os_release = {}
@@ -118,10 +119,10 @@ def check_os_suse(os_dictionary):
         if os_dictionary[os_release['PRETTY_NAME']] == 'OK':
             print(GREEN + "OK: "+ NOCOLOR + " " + os_release['PRETTY_NAME'] + " is a supported OS for this tool")
         else:
-            print
+            print()
             sys.exit(error_message)
     except:
-        print
+        print()
         sys.exit(error_message)
 
 def check_os_redhat(os_dictionary):
@@ -134,10 +135,10 @@ def check_os_redhat(os_dictionary):
         if os_dictionary[redhat_distribution_str] == 'OK':
             print(GREEN + "OK: "+ NOCOLOR + " " + redhat_distribution_str + " is a supported OS for this tool")
         else:
-            print
+            print()
             sys.exit(error_message)
     except:
-        print
+        print()
         sys.exit(error_message)
 
 def check_distribution():
@@ -152,9 +153,9 @@ def check_distribution():
 def check_selinux():
     #Check sestatus is disabled
     errors = 0
-    print
+    print()
     print("Checking SELinux status with sestatus")
-    print
+    print()
     try:
         return_code = subprocess.call(['sestatus'],stdout=DEVNULL, stderr=DEVNULL)
     except:
@@ -209,9 +210,9 @@ def get_json_versions(os_dictionary,sysctl_dictionary,packages_dictionary,ibm_po
 def check_time():
     #Leverages timedatectl from systemd to check if NTP is configured and if is is actively syncing. Raises error count if some of those are not happening.
     errors = 0
-    print
+    print()
     print("Checking NTP status with timedatectl")
-    print
+    print()
     #Lets check if the tool is even there
     try:
         return_code = subprocess.call(['timedatectl','status'],stdout=DEVNULL, stderr=DEVNULL)
@@ -248,10 +249,10 @@ def check_time():
         timedatectl.wait()
         if grep_rc_ntp == 0: #RedHat and is on
             print(GREEN + "OK: " + NOCOLOR + "NTP sync is activated in this system")
-            print
+            print()
         else: #None found
             print(RED + "ERROR: " + NOCOLOR + "NTP sync is not activated in this system. Please check timedatectl command")
-            print
+            print()
             errors = errors + 1
     return errors
 
@@ -259,7 +260,7 @@ def tuned_adm_check():
     errors = 0
     tuned_profiles_package = "tuned-profiles-sap-hana"
     print("Checking if tune-adm profile is set to sap-hana")
-    print
+    print()
     profile_package_installed_rc = rpm_is_installed(tuned_profiles_package)
     if profile_package_installed_rc == 1:
         print (RED + "ERROR: " + NOCOLOR + tuned_profiles_package + " is not installed. ")
@@ -289,39 +290,39 @@ def tuned_adm_check():
         #except:
         if return_code == 1:
             print(RED + "ERROR: " + NOCOLOR + "tuned profile is *NOT* fully matching the active profile")
-            print
+            print()
             errors = errors + 1
 
         if return_code == 0:
             print(GREEN + "OK: " + NOCOLOR + "tuned is matching the active profile")
-            print
+            print()
 
     return errors
 
 def saptune_check():
     #It uses saptune command to check the solution and show the avaialble notes. Changes version to version of saptune, we are just calling saptune
     errors = 0
-    print
+    print()
     print("Checking if saptune solution is set to HANA")
-    print
+    print()
     try:
         return_code = subprocess.call(['saptune','solution','verify','HANA'])
         if return_code == 0:
             print(GREEN + "OK: " + NOCOLOR + "saptune is using the solution HANA")
-            print
+            print()
         else:
             print(RED + "ERROR: " + NOCOLOR + "saptune is *NOT* fully using the solution HANA")
-            print
+            print()
             errors = errors + 1
     except:
         sys.exit(RED + "QUIT: " + NOCOLOR + "cannot run saptune. It is a needed package for this tool\n") # Not installed or else. On SuSE for SAP it is installed by default
 
     print("The following individual SAP notes recommendations are available via sapnote")
     print("Consider enabling ALL of them, including 2161991 as only sets NOOP as I/O scheduler")
-    print
+    print()
     #subprocess.check_output(['saptune','note','list'])
     os.system("saptune note list")
-    print
+    print()
     return errors
 
 def sysctl_check(sysctl_dictionary):
@@ -329,7 +330,7 @@ def sysctl_check(sysctl_dictionary):
     errors = 0
     warnings = 0
     print("Checking sysctl settings:")
-    print
+    print()
     for sysctl in sysctl_dictionary.keys():
         if sysctl != "json_version":
             recommended_value_str = str(sysctl_dictionary[sysctl])
@@ -348,7 +349,7 @@ def sysctl_check(sysctl_dictionary):
             except:
                     print(YELLOW + "WARNING: " + NOCOLOR + sysctl + " does not apply to this OS")
                     warnings = warnings + 1
-    print
+    print()
     return warnings,errors
 
 def rpm_is_installed(rpm_package):
@@ -364,7 +365,7 @@ def packages_check(packages_dictionary):
     #Checks if packages from JSON are installed or not based on the input data ont eh JSON
     errors = 0
     print("Checking packages install status:")
-    print
+    print()
     for package in packages_dictionary.keys():
         if package != "json_version":
             current_package_rc = rpm_is_installed(package)
@@ -374,13 +375,13 @@ def packages_check(packages_dictionary):
             else:
                 print(RED + "ERROR: " + NOCOLOR + package + " installation status is *NOT* as expected")
                 errors = errors + 1
-    print
+    print()
     return(errors)
 
 def ibm_power_package_check(ibm_power_packages_dictionary):
     errors = 1
     print("Checking IBM service and productivity tools packages install status:")
-    print
+    print()
     for package in ibm_power_packages_dictionary.keys():
         if package != "json_version":
             current_package_rc = rpm_is_installed(package)
@@ -392,12 +393,12 @@ def ibm_power_package_check(ibm_power_packages_dictionary):
                 print(GREEN + "OK: " + NOCOLOR + package + " installation status is not installed")
             else:
                 print(YELLOW + "WARNING: " + NOCOLOR + package + " installation status is *NOT* as expected. This is not a problem by itself. Check the summary at the end of the run")
-    print
+    print()
     if errors == 0:
         print(GREEN + "OK: " + NOCOLOR + " IBM service and productivity tools packages install status is as expected")
     else:
         print(RED + "ERROR: " + NOCOLOR + " IBM service and productivity tools packages install status is *NOT* as expected")
-    print
+    print()
     return(errors)
 
 def multipath_checker(svc_multipath_dictionary,mp_conf_dictionary):
@@ -475,16 +476,16 @@ def config_parser(conf_lines):
 
 def print_important_multipath_values(svc_multipath_dictionary):
     #We show the JSON values that have to be in the configuration
-    print
+    print()
     print (YELLOW + "Be sure to check that your current multipath.conf has the following attributtes set:" + NOCOLOR)
-    print
+    print()
     for mp_attr in svc_multipath_dictionary.keys():
         if mp_attr != "json_version":
             mp_value = str(svc_multipath_dictionary[mp_attr])
             print("\t" + mp_attr + "\t  --->\t" + mp_value)
-    print
+    print()
     print ("For a multipath.conf example for IBM Spectrum Virtualize storage (2145) with HANA please check Appendix B of " + REDBOOK_URL)
-    print
+    print()
 
 
 def detect_disk_type(disk_type):
@@ -509,7 +510,7 @@ def detect_disk_type(disk_type):
 def simple_multipath_check(multipath_dictionary):
     error = 0
     print ("Checking simple multipath.conf test")
-    print
+    print()
     #mp_conf_dictionary = load_multipath("/etc/multipath.conf")
     #multipath_errors = multipath_checker(svc_multipath_dictionary,mp_conf_dictionary)
     is_2145 = detect_disk_type("2145")
@@ -527,9 +528,9 @@ def simple_multipath_check(multipath_dictionary):
 
 def print_errors(linux_distribution,selinux_errors,timedatectl_errors,saptune_errors,sysctl_warnings,sysctl_errors,packages_errors,ibm_power_packages_errors,multipath_errors,with_multipath,ibm_storage):
     #End summary and say goodbye
-    print
+    print()
     print("The summary of this run:")
-    print
+    print()
 
     if linux_distribution == "redhat":
         if selinux_errors > 0:
@@ -629,8 +630,8 @@ def main():
     #Exit protocol
     DEVNULL.close()
     print_errors(linux_distribution,selinux_errors,timedatectl_errors,saptune_errors,sysctl_warnings,sysctl_errors,packages_errors,ibm_power_packages_errors,multipath_errors,with_multipath,ibm_storage)
-    print
-    print
+    print()
+    print()
 
 if __name__ == '__main__':
     main()
