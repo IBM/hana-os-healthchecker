@@ -6,6 +6,11 @@ import sys
 import subprocess
 import platform
 
+try:
+    raw_input      # Python 2
+except NameError:  # Python 3
+    raw_input = input
+
 #Colorful constants
 RED = '\033[91m'
 GREEN = '\033[92m'
