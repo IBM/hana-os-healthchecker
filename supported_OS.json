@@ -8,5 +8,6 @@
   "SUSE Linux Enterprise Server 15": "NOK",
   "Red Hat Enterprise Linux": "NOK",
   "Red Hat Enterprise Linux Server 7.4": "OK",
-  "Red Hat Enterprise Linux Server 7.5": "OK"
+  "Red Hat Enterprise Linux Server 7.5": "OK",
+  "Red Hat Enterprise Linux Server 7.6": "OK"
 }

@@ -24,13 +24,13 @@ GITHUB_URL = "https://github.com/IBM/hana-os-healthchecker"
 IBM_STORAGE_SIZING_GUIDELINE="https://www-01.ibm.com/support/docview.wss?uid=tss1flash10859&aid=1"
 
 #REDBOOK URL
-REDBOOK_URL = "REDBOOK URL NOT PUBLIC"
+REDBOOK_URL = "http://www.redbooks.ibm.com/abstracts/sg248432.html?Open"
 
 #devnull redirect destination
 DEVNULL = open(os.devnull, 'w')
 
 #This script version, independent from the JSON versions
-HOH_VERSION = "1.20"
+HOH_VERSION = "1.21"
 
 def load_json(json_file_str):
     #Loads  JSON into a dictionary or quits the program if it cannot. Future might add a try to donwload the JSON if not available before quitting
@@ -512,22 +512,29 @@ def detect_disk_type(disk_type):
     except:
             sys.exit(RED + "QUIT: " + NOCOLOR + "cannot read proc/scsi/sg/device_strs\n")
 
-def simple_multipath_check(multipath_dictionary):
+def simple_multipath_check(multipath_dictionary, ibm_storage):
     error = 0
     print ("Checking simple multipath.conf test")
     print()
     #mp_conf_dictionary = load_multipath("/etc/multipath.conf")
     #multipath_errors = multipath_checker(svc_multipath_dictionary,mp_conf_dictionary)
-    is_2145 = detect_disk_type("2145")
-    if is_2145 == 1: #If this is 2145 lets check if there is a multipath.cpnf file
-        print(GREEN + "OK: " + NOCOLOR +  " 2145 disk type detected")
-        if os.path.isfile('/etc/multipath.conf') == True:
-            print(GREEN + "OK: " + NOCOLOR +  " multipath.conf exists")
-            print_important_multipath_values(multipath_dictionary)
+    #is_2145 = detect_disk_type("2145")
+    if ibm_storage: #If this is 2145 lets check if there is a multipath.cpnf file
+        print(GREEN + "OK: " + NOCOLOR +  "2145 disk type detected")
+        mp_exists = os.path.isfile('/etc/multipath.conf')
+        if mp_exists:
+            print(GREEN + "OK: " + NOCOLOR +  "multipath.conf exists")
         else:
-            print(RED + "ERROR: " + NOCOLOR + " multipath.conf does not exists")
-            error = 1
-    elif is_2145 == 0: #This is NOT 2145 so lets just throw a warning to go check vendor for recommended values
+            print(RED + "ERROR: " + NOCOLOR + "multipath.conf does not exists")
+            error = error + 1
+        if os.path.isfile('/etc/udev/rules.d/99-ibm-2145.rules') == True:
+            print(GREEN + "OK: " + NOCOLOR +  "99-ibm-2145.rules exists")
+        else:
+            print(RED + "ERROR: " + NOCOLOR + "99-ibm-2145.rules does not exists")
+            error = error + 1
+        if mp_exists:
+            print_important_multipath_values(multipath_dictionary)
+    else: #This is NOT 2145 so lets just throw a warning to go check vendor for recommended values
         print(YELLOW + "WARNING: " + NOCOLOR + " this is not IBM Spectrum Virtualize storage, please refer to storage vendor documentation for recommended settings")
     return error
 
@@ -573,8 +580,8 @@ def print_errors(linux_distribution,selinux_errors,timedatectl_errors,saptune_er
     else:
         print(GREEN + "\tIBM service and productivity tools packages reported no deviations" + NOCOLOR)
 
-    if multipath_errors == 1:
-        print(RED + "\tXFS with IBM Spectrum Virtualize in use and no multipath.conf file detected" + NOCOLOR)
+    if multipath_errors > 0:
+        print(RED + "\tXFS with IBM Spectrum Virtualize in use and not all configuration files detected" + NOCOLOR)
 
     if with_multipath == 1:
         print(YELLOW + "\tmultipath option was called. Please refer to storage vendor documentation for recommended settings" + NOCOLOR)
@@ -629,8 +636,9 @@ def main():
 
     #Check multipath
     if storage == 'XFS':
-        multipath_errors = simple_multipath_check(svc_multipath_dictionary)
         ibm_storage = detect_disk_type("2145")
+        multipath_errors = simple_multipath_check(svc_multipath_dictionary, ibm_storage)
+
 
     #Exit protocol
     DEVNULL.close()
