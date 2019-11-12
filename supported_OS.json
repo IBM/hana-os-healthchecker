@@ -1,13 +1,18 @@
 {
-  "json_version": "1.0",
+  "json_version": "1.1",
   "SUSE Linux Enterprise Server for SAP Applications 12 SP2": "OK",
   "SUSE Linux Enterprise Server for SAP Applications 12 SP3": "OK",
   "SUSE Linux Enterprise Server 12 SP2": "OK",
   "SUSE Linux Enterprise Server 12 SP3": "OK",
   "SUSE Linux Enterprise Server 12 SP4": "OK",
-  "SUSE Linux Enterprise Server 15": "NOK",
+  "SUSE Linux Enterprise Server 15": "OK",
+  "SUSE Linux Enterprise Server 15 SP1": "NOK",
   "Red Hat Enterprise Linux": "NOK",
   "Red Hat Enterprise Linux Server 7.4": "OK",
   "Red Hat Enterprise Linux Server 7.5": "OK",
-  "Red Hat Enterprise Linux Server 7.6": "OK"
+  "Red Hat Enterprise Linux Server 7.6": "OK",
+  "Red Hat Enterprise Linux Server 7.7": "OK",
+  "Red Hat Enterprise Linux Server 7.8": "NOK",
+  "Red Hat Enterprise Linux Server 8.0": "NOK",
+  "Red Hat Enterprise Linux Server 8.1": "NOK"
 }
