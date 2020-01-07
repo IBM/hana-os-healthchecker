@@ -30,7 +30,7 @@ REDBOOK_URL = "http://www.redbooks.ibm.com/abstracts/sg248432.html?Open"
 DEVNULL = open(os.devnull, 'w')
 
 #This script version, independent from the JSON versions
-HOH_VERSION = "1.22"
+HOH_VERSION = "1.23"
 
 def load_json(json_file_str):
     #Loads  JSON into a dictionary or quits the program if it cannot. Future might add a try to donwload the JSON if not available before quitting
@@ -635,6 +635,7 @@ def main():
     ibm_power_packages_errors = ibm_power_package_check(ibm_power_packages_dictionary)
 
     #Check multipath
+    multipath_errors = 0
     if storage == 'XFS':
         ibm_storage = detect_disk_type("2145")
         multipath_errors = simple_multipath_check(svc_multipath_dictionary, ibm_storage)
