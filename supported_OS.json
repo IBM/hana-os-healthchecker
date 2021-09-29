@@ -1,5 +1,5 @@
 {
-  "json_version": "1.8",
+  "json_version": "1.9",
   "SUSE Linux Enterprise Server for SAP Applications 12 SP2": "OK",
   "SUSE Linux Enterprise Server for SAP Applications 12 SP3": "OK",
   "SUSE Linux Enterprise Server for SAP Applications 12 SP4": "OK",
@@ -23,5 +23,5 @@
   "Red Hat Enterprise Linux Server 8.1": "OK",
   "Red Hat Enterprise Linux Server 8.2": "OK",
   "Red Hat Enterprise Linux Server 8.3": "NOK",
-  "Red Hat Enterprise Linux Server 8.4": "NOK"
+  "Red Hat Enterprise Linux Server 8.4": "OK"
 }
