@@ -1,3 +1,7 @@
+PLEASE READ: THIS IS ARCHIVED, NO LONGER MAINTAINED. IF YOU ARE INTERESTED ON OWNING IT, PLEASE CONTACT ME
+
+
+
 Main logic besides this tool:
 - Keep it easy to update as all input of data is via JSON files.
 - Not checking stuff that is already checked elsewhere (hwcct, saptune , ...).
