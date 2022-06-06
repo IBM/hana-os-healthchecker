@@ -30,7 +30,7 @@ REDBOOK_URL = "http://www.redbooks.ibm.com/abstracts/sg248432.html?Open"
 DEVNULL = open(os.devnull, 'w')
 
 #This script version, independent from the JSON versions
-HOH_VERSION = "1.23"
+HOH_VERSION = "1.24"
 
 def load_json(json_file_str):
     #Loads  JSON into a dictionary or quits the program if it cannot. Future might add a try to donwload the JSON if not available before quitting
@@ -47,8 +47,7 @@ def check_parameters():
     try: #in case no argument is passed
         argument1=sys.argv[1]
     except:
-        print("")
-        sys.exit(error_message)
+        argument1="XFS"
 
     #Optional --with-multipath argument
     try: #in case no argument is passed
