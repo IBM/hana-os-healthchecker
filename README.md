@@ -19,13 +19,23 @@ cd hana-os-healthchecker
 git pull
 ```
 
-Enter the directory and run the tool with one parameter (XFS/ESS/NFS):
+Enter the directory and run the tool with one parameter (XFS/ESS/NFS), if no parameter is passed it defaults to XFS:
 
 ```
 cd hana-os-healthchecker
 
 ./hoh.py XFS
 ```
+
+If you want to disable the deeper multipath check you must pass both XFS and --without-multipath
+
+```
+cd hana-os-healthchecker
+
+./hoh.py XFS --without-multipath
+```
+
+NOTE: With deeper multipath check only one device entry is allowed inside devices part of the multipath file
 
 At this point the tool starts
 

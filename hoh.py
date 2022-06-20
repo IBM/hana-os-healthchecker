@@ -8,8 +8,10 @@ import platform
 
 try:
     raw_input      # Python 2
+    python2 = True
 except NameError:  # Python 3
     raw_input = input
+    python2 = False
 
 #Colorful constants
 RED = '\033[91m'
@@ -17,11 +19,16 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 NOCOLOR = '\033[0m'
 
+#Python check
+if python2:
+    print(RED + "This tool must be run on python 3")
+    sys.exit(1)
+
 #GITHUB URL
 GITHUB_URL = "https://github.com/IBM/hana-os-healthchecker"
 
 #IBM_STORAGE_SIZING_GUIDELINE
-IBM_STORAGE_SIZING_GUIDELINE="https://www-01.ibm.com/support/docview.wss?uid=tss1flash10859&aid=1"
+IBM_STORAGE_SIZING_GUIDELINE="https://www.ibm.com/storage/sap-hana"
 
 #REDBOOK URL
 REDBOOK_URL = "http://www.redbooks.ibm.com/abstracts/sg248432.html?Open"
@@ -30,7 +37,7 @@ REDBOOK_URL = "http://www.redbooks.ibm.com/abstracts/sg248432.html?Open"
 DEVNULL = open(os.devnull, 'w')
 
 #This script version, independent from the JSON versions
-HOH_VERSION = "1.24"
+HOH_VERSION = "1.25"
 
 def load_json(json_file_str):
     #Loads  JSON into a dictionary or quits the program if it cannot. Future might add a try to donwload the JSON if not available before quitting
@@ -48,16 +55,18 @@ def check_parameters():
         argument1=sys.argv[1]
     except:
         argument1="XFS"
-
+        #print("")
+        #sys.exit(error_message)
+    
     #Optional --with-multipath argument
     try: #in case no argument is passed
         argument2=sys.argv[2]
-        if argument2 == '--with-multipath':
-            with_multipath = 1
-        else:
+        if argument2 == '--without-multipath':
             with_multipath = 0
+        else:
+            with_multipath = 1
     except:
-        with_multipath = 0
+        with_multipath = 1
 
     if argument1.upper() in ('XFS', 'NFS', 'ESS'): #To check is a wanted argument
         return argument1.upper(),with_multipath
@@ -408,6 +417,8 @@ def ibm_power_package_check(ibm_power_packages_dictionary):
 def multipath_checker(svc_multipath_dictionary,mp_conf_dictionary):
     #Missing warnings and header
     mp_errors = 0
+    items_found = 0
+    min_items_found = len(svc_multipath_dictionary) - 1
     for mp_attr in svc_multipath_dictionary.keys():
         mp_value = svc_multipath_dictionary[mp_attr]
         #We go to check each entry on the JSON to both defaults and devices
@@ -416,31 +427,43 @@ def multipath_checker(svc_multipath_dictionary,mp_conf_dictionary):
         #If does not exist we move to look into devices 2145
         if mp_attr == 'json_version': #Ignore JSON version
             continue
-
-
         for item in mp_conf_dictionary:
-            is_found = 0
-            if 'defaults' in item:
-                for default in item['defaults']:
-                    if mp_attr in default:
-                        is_found = 1
-                        current_value = default[mp_attr]
+            if "defaults" in item:
+                #There is defaults entry on the file
+                for default_entry in item['defaults']:
+                    if mp_attr in default_entry:
+                        current_value = default_entry[mp_attr].replace('"','')
                         if current_value == mp_value:
-                            print(GREEN + "OK: " + NOCOLOR + mp_attr + " has the recommended value of " + str(mp_value))
+                            print(GREEN + "OK: " + NOCOLOR + mp_attr + " has the required value of " + str(mp_value))
+                            items_found = items_found + 1
                         else:
                             print (RED + "ERROR: " + NOCOLOR + mp_attr + " is " + str(current_value) + " and should be " + str(mp_value))
                             mp_errors = mp_errors + 1
-            #if 'devices' in item:
-            #    for devices in item['devices']:
-            #        if 'device' in devices:
-            #            for device in devices:
-            #                if device['vendor'] != "IBM" or device['product'] != "2145":
-            ##                    no_ibm_storage = 1
+            if "devices" in item:
+                # There might be more than one entry for device ... we have a hole here for now
+                for devices_dict in item['devices']:
+                    if "device" in devices_dict:
+                        for device_dict in devices_dict['device']:
+                            if mp_attr in device_dict:
+                                current_value = device_dict[mp_attr].replace('"','')
+                                if current_value == mp_value:
+                                    print(GREEN + "OK: " + NOCOLOR + mp_attr + " has the required value of " + str(mp_value))
+                                    items_found = items_found + 1
+                                else:
+                                    print (RED + "ERROR: " + NOCOLOR + mp_attr + " is " + str(current_value) + " and should be " + str(mp_value))
+                                    mp_errors = mp_errors + 1
+
+    if items_found < min_items_found:
+        print (RED + "ERROR: " + NOCOLOR + "not all required entried on multipath.conf exists in the file")
+        mp_errors = mp_errors + 1
+    else:
+        print(GREEN + "OK: " + NOCOLOR + "all required entrie on multipath.conf exists in the file")
     return mp_errors
 
 
 def load_multipath(multipath_file):
     #Load multipath file
+    print("")
     print("Loading multipath file")
     try:
         with open(multipath_file, 'r') as mp_file:
@@ -449,16 +472,17 @@ def load_multipath(multipath_file):
     except:
         sys.exit(RED + "QUIT: " + NOCOLOR + "cannot read multipath file "+ multipath_file +" \n")
 
+
 def config_parser(conf_lines):
     config = []
 
     # iterate on config lines
     for line in conf_lines:
         #Get rid of inline comments
-        line = line.split('#')[0]
+        line = line.split('#')
         # remove left and right spaces
-        line = line.strip()
-        line = line.translate(None, '"')
+        line = line[0].strip()
+        #line = line[0].translate(None, '"')
 
         if line.startswith('#'):
             # skip comment lines
@@ -511,18 +535,19 @@ def detect_disk_type(disk_type):
     except:
             sys.exit(RED + "QUIT: " + NOCOLOR + "cannot read proc/scsi/sg/device_strs\n")
 
-def simple_multipath_check(multipath_dictionary, ibm_storage):
+
+def simple_multipath_check(multipath_dictionary,with_multipath):
     error = 0
-    print ("Checking simple multipath.conf test")
-    print("")
-    #mp_conf_dictionary = load_multipath("/etc/multipath.conf")
-    #multipath_errors = multipath_checker(svc_multipath_dictionary,mp_conf_dictionary)
-    #is_2145 = detect_disk_type("2145")
-    if ibm_storage: #If this is 2145 lets check if there is a multipath.cpnf file
+    is_2145 = detect_disk_type("2145")
+    if is_2145: #If this is 2145 lets check if there is a multipath.cpnf file
         print(GREEN + "OK: " + NOCOLOR +  "2145 disk type detected")
         mp_exists = os.path.isfile('/etc/multipath.conf')
         if mp_exists:
             print(GREEN + "OK: " + NOCOLOR +  "multipath.conf exists")
+            if with_multipath:
+                mp_conf_dictionary = load_multipath("/etc/multipath.conf")
+                mp_error = multipath_checker(multipath_dictionary,mp_conf_dictionary)
+                error = error + mp_error
         else:
             print(RED + "ERROR: " + NOCOLOR + "multipath.conf does not exists")
             error = error + 1
@@ -531,11 +556,12 @@ def simple_multipath_check(multipath_dictionary, ibm_storage):
         else:
             print(RED + "ERROR: " + NOCOLOR + "99-ibm-2145.rules does not exists")
             error = error + 1
-        if mp_exists:
-            print_important_multipath_values(multipath_dictionary)
+        #if mp_exists:
+        #    print_important_multipath_values(multipath_dictionary)
     else: #This is NOT 2145 so lets just throw a warning to go check vendor for recommended values
         print(YELLOW + "WARNING: " + NOCOLOR + " this is not IBM Spectrum Virtualize storage, please refer to storage vendor documentation for recommended settings")
     return error
+
 
 def print_errors(linux_distribution,selinux_errors,timedatectl_errors,saptune_errors,sysctl_warnings,sysctl_errors,packages_errors,ibm_power_packages_errors,multipath_errors,with_multipath,ibm_storage):
     #End summary and say goodbye
@@ -580,13 +606,16 @@ def print_errors(linux_distribution,selinux_errors,timedatectl_errors,saptune_er
         print(GREEN + "\tIBM service and productivity tools packages reported no deviations" + NOCOLOR)
 
     if multipath_errors > 0:
-        print(RED + "\tXFS with IBM Spectrum Virtualize in use and not all configuration files detected" + NOCOLOR)
+        print(RED + "\tXFS with IBM Spectrum Virtualize in use and not all checks passed" + NOCOLOR)
 
-    if with_multipath == 1:
-        print(YELLOW + "\tmultipath option was called. Please refer to storage vendor documentation for recommended settings" + NOCOLOR)
+    if with_multipath == 0:
+        print(YELLOW + "\tmultipath option was not called. Please refer to storage vendor documentation for recommended settings" + NOCOLOR)
+    else:
+        print(GREEN + "\tmultipath option was called" + NOCOLOR)
 
     if ibm_storage == 1:
         print(YELLOW + "\t2145 disk detected. Be sure to follow IBM Storage sizing guidelines: " + IBM_STORAGE_SIZING_GUIDELINE + NOCOLOR)
+
 
 def main():
     #Check parameters are passed
@@ -637,8 +666,9 @@ def main():
     multipath_errors = 0
     if storage == 'XFS':
         ibm_storage = detect_disk_type("2145")
-        multipath_errors = simple_multipath_check(svc_multipath_dictionary, ibm_storage)
-
+        multipath_errors = simple_multipath_check(svc_multipath_dictionary,with_multipath)
+    else:
+        ibm_storage = False
 
     #Exit protocol
     DEVNULL.close()
