@@ -5,6 +5,7 @@ import os
 import sys
 import subprocess
 import platform
+import re
 
 try:
     raw_input      # Python 2
@@ -37,7 +38,7 @@ REDBOOK_URL = "http://www.redbooks.ibm.com/abstracts/sg248432.html?Open"
 DEVNULL = open(os.devnull, 'w')
 
 #This script version, independent from the JSON versions
-HOH_VERSION = "1.25"
+HOH_VERSION = "1.26"
 
 def load_json(json_file_str):
     #Loads  JSON into a dictionary or quits the program if it cannot. Future might add a try to donwload the JSON if not available before quitting
@@ -58,7 +59,7 @@ def check_parameters():
         #print("")
         #sys.exit(error_message)
     
-    #Optional --with-multipath argument
+    #Optional --without-multipath argument
     try: #in case no argument is passed
         argument2=sys.argv[2]
         if argument2 == '--without-multipath':
@@ -470,7 +471,15 @@ def load_multipath(multipath_file):
             mp_dictionary = config_parser(mp_file)
             return mp_dictionary
     except:
-        sys.exit(RED + "QUIT: " + NOCOLOR + "cannot read multipath file "+ multipath_file +" \n")
+        sys.exit
+        (
+            RED + 
+            "QUIT: " + 
+            NOCOLOR + 
+            "cannot read multipath file " + 
+            multipath_file +
+            ". Please check it has only one device section or run with --without-multipath \n"
+        )
 
 
 def config_parser(conf_lines):
@@ -502,7 +511,9 @@ def config_parser(conf_lines):
                     config.append({line[0]: " ".join(line[1:])})
     return config
 
+
 def print_important_multipath_values(svc_multipath_dictionary):
+    #Not being called since 1.25
     #We show the JSON values that have to be in the configuration
     print("")
     print (YELLOW + "Be sure to check that your current multipath.conf has the following attributtes set:" + NOCOLOR)
@@ -536,6 +547,26 @@ def detect_disk_type(disk_type):
             sys.exit(RED + "QUIT: " + NOCOLOR + "cannot read proc/scsi/sg/device_strs\n")
 
 
+def check_udev_rules(file_full_path):
+    #File has been checked to exist already
+    udev_error = False
+    regex_to_check = r'^SUBSYSTEM==["]?block["]?,[\s]?ACTION==["]?add["]?,[\s]?ENV{ID_VENDOR}==["]?IBM["]?,[\s]?ENV{ID_MODEL}==["]?2145["]?,[\s]?RUN\+=["]?\/bin\/sh -c \'echo 120 >\/sys\/block\/%k\/device\/timeout\'["]?'
+    udev_2145_re = re.compile(regex_to_check, re.MULTILINE)
+    udev_file = open(file_full_path, 'r')
+    for udev_line in udev_file:
+        udev_2145 = udev_2145_re.search(udev_line)
+        if udev_2145:
+            print(GREEN + "OK: " + NOCOLOR + "99-ibm-2145.rules has the required content")
+            udev_error = False
+            break
+        else:
+            udev_error = True
+
+    if udev_error:
+        print(RED + "ERROR: " + NOCOLOR + "99-ibm-2145.rules does not have the required content")
+    return udev_error
+
+
 def simple_multipath_check(multipath_dictionary,with_multipath):
     error = 0
     is_2145 = detect_disk_type("2145")
@@ -553,9 +584,12 @@ def simple_multipath_check(multipath_dictionary,with_multipath):
             error = error + 1
         if os.path.isfile('/etc/udev/rules.d/99-ibm-2145.rules') == True:
             print(GREEN + "OK: " + NOCOLOR +  "99-ibm-2145.rules exists")
+            udev_rule_errors = check_udev_rules("/etc/udev/rules.d/99-ibm-2145.rules")
+            error = error + udev_rule_errors
         else:
             print(RED + "ERROR: " + NOCOLOR + "99-ibm-2145.rules does not exists")
             error = error + 1
+        # Not being called since 1.25
         #if mp_exists:
         #    print_important_multipath_values(multipath_dictionary)
     else: #This is NOT 2145 so lets just throw a warning to go check vendor for recommended values
